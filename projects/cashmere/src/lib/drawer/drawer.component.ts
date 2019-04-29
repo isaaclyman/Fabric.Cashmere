@@ -20,6 +20,22 @@ export class DrawerPromiseResult {
     constructor(public type: 'open' | 'close') {}
 }
 
+const supportedModes = ['over', 'push', 'side'];
+
+export function validateModeInput(inputStr: string) {
+    if (supportedModes.indexOf(inputStr) < 0) {
+        throw Error('Unsupported drawer mode value: ' + inputStr);
+    }
+}
+
+const supportedAligns = ['left', 'right'];
+
+export function validateAlignInput(inputStr: string) {
+    if (supportedAligns.indexOf(inputStr) < 0) {
+        throw Error('Unsupported drawer alignment value: ' + inputStr);
+    }
+}
+
 /** Drawer that can be opened or closed on the drawer container */
 @Component({
     selector: 'hc-drawer',
@@ -50,40 +66,72 @@ export class DrawerPromiseResult {
 })
 export class Drawer implements AfterContentInit {
     readonly _openChange = new EventEmitter<boolean>();
+    private _mode: string = 'push';
+    private _align: string = 'left';
 
-    /** Mode of the drawer; one of 'over', 'push' or 'side' */
-    @Input() mode: 'over' | 'push' | 'side' = 'push';
+    /** Mode of the drawer: `over`, `push` or `side` */
+    @Input()
+    get mode(): string {
+        return this._mode;
+    }
 
-    /** Side that the drawer is attached to */
-    @Input() align: 'left' | 'right' = 'left';
+    set mode(modeType: string) {
+        validateModeInput(modeType);
+        this._mode = modeType;
+    }
+
+    /** Side the drawer is attached to: `left` or `right` */
+    @Input()
+    get align(): string {
+        return this._align;
+    }
+
+    set align(alignType: string) {
+        validateAlignInput(alignType);
+        this._align = alignType;
+    }
 
     /** Event emitted when drawer has started to open */
     @Output()
     get openStart(): Observable<void> {
-        return this._animationStarted.pipe(filter(event => event.fromState === 'void' && event.toState === 'open'), map(() => {}));
+        return this._animationStarted.pipe(
+            filter(event => event.fromState === 'void' && event.toState === 'open'),
+            map(() => {})
+        );
     }
 
     /** Event emitted when drawer has started to close */
     @Output()
     get closeStart(): Observable<void> {
-        return this._animationStarted.pipe(filter(event => event.fromState === 'open' && event.toState === 'void'), map(() => {}));
+        return this._animationStarted.pipe(
+            filter(event => event.fromState === 'open' && event.toState === 'void'),
+            map(() => {})
+        );
     }
 
     /** Event emitted when drawer has opened */
     @Output('opened')
     get _openStream() {
-        return this._openChange.pipe(filter(value => value), map(() => {}));
+        return this._openChange.pipe(
+            filter(value => value),
+            map(() => {})
+        );
     }
 
     /** Event emitted when drawer has closed */
     @Output('closed')
     get _closeStream() {
-        return this._openChange.pipe(filter(value => !value), map(() => {}));
+        return this._openChange.pipe(
+            filter(value => !value),
+            map(() => {})
+        );
     }
 
     /** Tabindex of the element */
-    @HostBinding() tabindex = -1;
-    @HostBinding('class.hc-drawer') _drawerClass = true;
+    @HostBinding()
+    tabindex = -1;
+    @HostBinding('class.hc-drawer')
+    _drawerClass = true;
 
     readonly _animationStarted = new EventEmitter<AnimationEvent>();
 
@@ -128,7 +176,7 @@ export class Drawer implements AfterContentInit {
 
     @HostBinding('class.hc-drawer-right')
     get _isRight() {
-        return this.align === 'right';
+        return this._align === 'right';
     }
 
     @HostBinding('@openState')
@@ -186,8 +234,6 @@ export class Drawer implements AfterContentInit {
 
     /** Toggles the drawer */
     toggle(isOpen: boolean = !this.opened): Promise<DrawerPromiseResult> {
-        this._drawerOpened = isOpen;
-
         if (!this._animationPromise) {
             this._drawerOpened = isOpen;
 

@@ -50,14 +50,33 @@ export class HcFooterCellDef extends CdkFooterCellDef {}
     providers: [{provide: CdkColumnDef, useExisting: HcColumnDef}]
 })
 export class HcColumnDef extends CdkColumnDef {
+    private _justify: string = 'left';
+
     /** Unique name for this column. */
-    @Input('hcColumnDef') name: string;
+    @Input('hcColumnDef')
+    name: string;
+
+    /** Sets the text alignment for this column: `left` (default), `center` or `right` */
+    @Input()
+    get justify(): string {
+        return this._justify;
+    }
+
+    set justify(justifyVal: string) {
+        if (justifyVal === 'left' || justifyVal === 'center' || justifyVal === 'right') {
+            this._justify = justifyVal;
+        } else {
+            throw Error('Unsupported table column alignment value: ' + justifyVal);
+        }
+    }
 
     /** Whether this column should be sticky positioned at the start of the row */
-    @Input() sticky: boolean;
+    @Input()
+    sticky: boolean;
 
     /** Whether this column should be sticky positioned on the end of the row */
-    @Input() stickyEnd: boolean;
+    @Input()
+    stickyEnd: boolean;
 }
 
 /** Header cell template container that adds the right classes and role. */
@@ -69,9 +88,10 @@ export class HcColumnDef extends CdkColumnDef {
     }
 })
 export class HcHeaderCell extends CdkHeaderCell {
-    constructor(columnDef: CdkColumnDef, elementRef: ElementRef) {
+    constructor(columnDef: HcColumnDef, elementRef: ElementRef) {
         super(columnDef, elementRef);
         elementRef.nativeElement.classList.add(`hc-column-${columnDef.cssClassFriendlyName}`);
+        elementRef.nativeElement.classList.add(`hc-table-justify-` + columnDef.justify);
     }
 }
 
@@ -84,9 +104,10 @@ export class HcHeaderCell extends CdkHeaderCell {
     }
 })
 export class HcFooterCell extends CdkFooterCell {
-    constructor(columnDef: CdkColumnDef, elementRef: ElementRef) {
+    constructor(columnDef: HcColumnDef, elementRef: ElementRef) {
         super(columnDef, elementRef);
         elementRef.nativeElement.classList.add(`hc-column-${columnDef.cssClassFriendlyName}`);
+        elementRef.nativeElement.classList.add(`hc-table-justify-` + columnDef.justify);
     }
 }
 
@@ -99,8 +120,9 @@ export class HcFooterCell extends CdkFooterCell {
     }
 })
 export class HcCell extends CdkCell {
-    constructor(columnDef: CdkColumnDef, elementRef: ElementRef) {
+    constructor(columnDef: HcColumnDef, elementRef: ElementRef) {
         super(columnDef, elementRef);
         elementRef.nativeElement.classList.add(`hc-column-${columnDef.cssClassFriendlyName}`);
+        elementRef.nativeElement.classList.add(`hc-table-justify-` + columnDef.justify);
     }
 }

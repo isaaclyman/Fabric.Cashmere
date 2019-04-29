@@ -3,13 +3,17 @@ import * as d3 from 'd3';
 
 @Component({
     selector: 'hc-demo-barchart',
-    template: `<div class="d3-bar-chart" #chart></div>`,
+    template: `
+        <div class="d3-bar-chart" #chart></div>
+    `,
     styleUrls: ['./barchart.component.scss'],
     encapsulation: ViewEncapsulation.None
 })
 export class BarchartComponent implements OnInit {
-    @ViewChild('chart') private chartContainer: ElementRef;
-    @Input() private data: Array<any>;
+    @ViewChild('chart')
+    private chartContainer: ElementRef;
+    @Input()
+    private data: Array<any>;
     private margin: any = {top: 20, bottom: 45, left: 30, right: 20};
     private chart: any;
     private width: number;
@@ -187,8 +191,7 @@ export class BarchartComponent implements OnInit {
             });
 
         // add new bars
-        bar
-            .selectAll('rect')
+        bar.selectAll('rect')
             .data(function(d) {
                 return d.slice(1);
             })
@@ -201,8 +204,7 @@ export class BarchartComponent implements OnInit {
             .attr('height', d => this.height - this.yScale(d));
 
         // add mouseover tooltips
-        bar
-            .selectAll('rect')
+        bar.selectAll('rect')
             .on('mouseover', function(d, i) {
                 let groupName = d3.select(this.parentNode).attr('name');
                 self.tip

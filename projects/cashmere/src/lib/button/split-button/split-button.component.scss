@@ -1,0 +1,15 @@
+@import '../../sass/colors';
+@import '../../sass/functions';
+@import '../../sass/mixins';
+@import '../../sass/button';
+
+.hc-split-button {
+    @include hc-split-button();
+
+    .hc-split-button-main {
+        @include hc-split-button-main();
+    }
+    .hc-split-button-toggle {
+        @include hc-split-button-toggle();
+    }
+}

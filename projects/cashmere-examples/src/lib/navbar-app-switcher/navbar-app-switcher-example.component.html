@@ -1,0 +1,54 @@
+<hc-navbar appIcon="./assets/CashmereAppLogo.svg" brandIcon="./assets/TriFlame.svg" [homeUri]="undefined" [fixedTop]="false">
+    <hc-navbar-link [active]="true" uri="undefined" linkText="Home"></hc-navbar-link>
+    <hc-navbar-link [active]="false" uri="undefined" linkText="Oncology"></hc-navbar-link>
+    <hc-navbar-link [active]="false" uri="undefined" linkText="Surgery"></hc-navbar-link>
+    <hc-navbar-link [active]="false" uri="undefined" linkText="Pediatric"></hc-navbar-link>
+    <hc-navbar-link [active]="false" uri="undefined" linkText="Cardiovascular"></hc-navbar-link>
+    <hc-navbar-link [active]="false" uri="undefined" linkText="Rehabilition"></hc-navbar-link>
+    <hc-navbar-link [active]="false" uri="undefined" linkText="Intensive Care"></hc-navbar-link>
+    <hc-icon class="hc-navbar-icon" fontSet="fa" fontIcon="fa-th" [hcPop]="appSwitcher"></hc-icon>
+    <hc-icon class="hc-navbar-icon" fontSet="fa" fontIcon="fa-question-circle-o" [hcPop]="options"></hc-icon>
+    <span class="hc-navbar-vertical-separator"></span>
+    <div class="hc-navbar-username" *ngIf="user" [hcPop]="user">
+        <span class="hc-text-ellipsis">{{ username }}</span>
+        <hc-icon fontSet="fa" fontIcon="fa-angle-down"></hc-icon>
+    </div>
+    <!-- Inline style is added for example only to prevent its mobile menu from colliding with Cashmere site navigation -->
+    <!-- Do NOT include style="display: none;" in your hc-navbar-mobile-menu tag -->
+    <hc-navbar-mobile-menu style="display: none;">
+        <hc-list>
+            <hc-list-item routerLink="undefined" routerLinkActive="active-link"><span hcListLine>Home</span></hc-list-item>
+            <hc-list-item routerLink="undefined" routerLinkActive="active-link"><span hcListLine>Oncology</span></hc-list-item>
+            <hc-list-item routerLink="undefined" routerLinkActive="active-link"><span hcListLine>Surgery</span></hc-list-item>
+            <hc-list-item routerLink="undefined" routerLinkActive="active-link"><span hcListLine>Pediatric</span></hc-list-item>
+            <hc-list-item routerLink="undefined" routerLinkActive="active-link"><span hcListLine>Cardiovascular</span></hc-list-item>
+            <hc-list-item routerLink="undefined" routerLinkActive="active-link"><span hcListLine>Rehabilition</span></hc-list-item>
+            <hc-list-item routerLink="undefined" routerLinkActive="active-link"><span hcListLine>Intensive Care</span></hc-list-item>
+        </hc-list>
+        <hr />
+        <hc-list>
+            <a href="https://github.com/HealthCatalyst/Fabric.Cashmere">
+                <hc-list-item><span hcListLine>View on GitHub</span></hc-list-item>
+            </a>
+        </hc-list>
+        <hc-app-switcher-links></hc-app-switcher-links>
+    </hc-navbar-mobile-menu>
+</hc-navbar>
+
+<hc-pop #appSwitcher><hc-app-switcher iconHeight="100"></hc-app-switcher></hc-pop>
+
+<hc-pop #options>
+    <ul class="list-options">
+        <li><a href="" target="_blank">Help Topics</a></li>
+        <li><a href="" target="_blank">Release Notes</a></li>
+        <li><a href="" target="_blank">About</a></li>
+        <li><a href="https://community.healthcatalyst.com/" target="_blank">Health Catalyst Community</a></li>
+        <li><a href="" target="_blank">Send us your feedback</a></li>
+    </ul>
+</hc-pop>
+
+<hc-pop #user>
+    <ul class="list-options">
+        <li><a href="" target="_blank">Logout</a></li>
+    </ul>
+</hc-pop>

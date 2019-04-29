@@ -23,22 +23,23 @@
 
     <hc-tile>
         <div class="header-row">
-            <span class="header-dropdown" [hcPopover]="options" popperPlacement="bottom">
-                <h2 class="chart-header dropdown">Patient Readmissions</h2>
-            </span>
+            <button hc-button title="Patient Readmissions" buttonStyle="link" class="chart-header" [hcPop]="options" popperPlacement="bottom">
+                <h2>Patient Readmissions</h2>
+                <hc-icon fontSet="fa" fontIcon="fa-chevron-down" class="header-icon-right"></hc-icon>
+            </button>
             <span class="header-right">
                 <hc-icon fontSet="fa" fontIcon="fa-share-alt" (click)="chartShare(content,'Share Chart')"></hc-icon>
                 <hc-icon fontSet="fa" fontIcon="fa-info-circle" (click)="chartInfo(content, 'Chart Information')"></hc-icon>
             </span>
         </div>
-        <hc-popover-content #options>
+        <hc-pop #options>
             <ul class="list-options">
                 <li>Patient Readmissions</li>
                 <li><button>Inpatient Mortality Rate</button></li>
                 <li><button>Average Length of Stay</button></li>
                 <li><button>Time to Service</button></li>
             </ul>
-        </hc-popover-content>
+        </hc-pop>
         <div *ngIf="loading" class="bar-loader">
             <hc-progress-spinner diameter="50" color="green"></hc-progress-spinner>
         </div>

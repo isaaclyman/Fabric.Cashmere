@@ -6,19 +6,27 @@ An Angular component library that makes any task feel luxurious.
 
 ## Quick Links
 
-*   [CHANGELOG](https://github.com/HealthCatalyst/Fabric.Cashmere/blob/master/CHANGELOG.md)
-*   [Components](http://cashmere.healthcatalyst.net/components)
-*   [Styles](http://cashmere.healthcatalyst.net/styles)
-*   [Getting Started](http://cashmere.healthcatalyst.net/guides/getting-started)
-*   [Guidelines for Contribution](http://cashmere.healthcatalyst.net/guides/contribution-guide)
-*   [Packaging Library](http://cashmere.healthcatalyst.net/guides/packaging-library)
-*   [Submit an Issue](http://cashmere.healthcatalyst.net/guides/submit-an-issue)
-*   [Supported Browsers](http://cashmere.healthcatalyst.net/guides/supported-browsers)
+-   [CHANGELOG](https://github.com/HealthCatalyst/Fabric.Cashmere/blob/master/CHANGELOG.md)
+-   [Components](http://cashmere.healthcatalyst.net/components)
+-   [Styles](http://cashmere.healthcatalyst.net/styles)
+-   [Getting Started](http://cashmere.healthcatalyst.net/guides/getting-started)
+-   [Guidelines for Contribution](http://cashmere.healthcatalyst.net/guides/contribution-guide)
+-   [Packaging Library](http://cashmere.healthcatalyst.net/guides/packaging-library)
+-   [Submit an Issue](http://cashmere.healthcatalyst.net/guides/submit-an-issue)
+-   [Supported Browsers](http://cashmere.healthcatalyst.net/guides/supported-browsers)
 
-## Installing
+## Installing to an Existing Project
 
-Run `npm i --save @healthcatalyst/cashmere`.
+- Run `npm i --save @healthcatalyst/cashmere`
 
-## Running the Demo App
+## Running the Demo Application
 
-Run `npm run build && ng serve user-guide` to serve the demo application on port 4200.
+- Clone the repository `git clone https://github.com/HealthCatalyst/Fabric.Cashmere.git`
+- Run `cd Fabric.Cashmere && npm install && npm run build && npx ng serve user-guide`
+- View the demo application at `http://localhost:4200`
+
+## Sponsors
+
+Thanks to [BrowserStack](http://www.browserstack.com) for kindly providing the project with free of charge automatic testing time.
+
+![BrowserStack](https://raw.githubusercontent.com/HealthCatalyst/Fabric.Cashmere/master/Browserstack-logo@2x.png)

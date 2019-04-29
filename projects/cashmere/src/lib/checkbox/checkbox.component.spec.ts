@@ -11,14 +11,12 @@ import {By} from '@angular/platform-browser';
 describe('CheckboxComponent', () => {
     let fixture: ComponentFixture<any>;
 
-    beforeEach(
-        fakeAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [CheckboxModule, FormsModule, ReactiveFormsModule],
-                declarations: [SingleCheckboxComponent, CheckboxWithFormControlComponent, CheckboxWithNgModelComponent]
-            }).compileComponents();
-        })
-    );
+    beforeEach(fakeAsync(() => {
+        TestBed.configureTestingModule({
+            imports: [CheckboxModule, FormsModule, ReactiveFormsModule],
+            declarations: [SingleCheckboxComponent, CheckboxWithFormControlComponent, CheckboxWithNgModelComponent]
+        }).compileComponents();
+    }));
 
     describe('basic behaviors', () => {
         let checkboxDebugElement: DebugElement;
@@ -248,10 +246,12 @@ describe('CheckboxComponent', () => {
                 [disabled]="isDisabled"
                 [value]="checkboxValue"
                 (click)="onCheckboxClick($event)"
-                (change)="onCheckboxChange($event)">
+                (change)="onCheckboxChange($event)"
+            >
                 Simple checkbox
             </hc-checkbox>
-        </div>`
+        </div>
+    `
 })
 export class SingleCheckboxComponent {
     isChecked: boolean = false;
@@ -269,14 +269,17 @@ export class SingleCheckboxComponent {
 
 @Component({
     template: `
-        <hc-checkbox [formControl]="formControl"></hc-checkbox>`
+        <hc-checkbox [formControl]="formControl"></hc-checkbox>
+    `
 })
 class CheckboxWithFormControlComponent {
     formControl = new FormControl();
 }
 
 @Component({
-    template: `<hc-checkbox [required]="isRequired" [(ngModel)]="isGood">Be good</hc-checkbox>`
+    template: `
+        <hc-checkbox [required]="isRequired" [(ngModel)]="isGood">Be good</hc-checkbox>
+    `
 })
 class CheckboxWithNgModelComponent {
     isGood: boolean = false;

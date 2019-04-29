@@ -5,11 +5,6 @@
     width: 100%;
 }
 
-.brand {
-    cursor: pointer;
-    transition: background-color 0.25s ease;
-}
-
 .popover-content {
     max-width: 410px;
     & > h4 {
@@ -31,13 +26,16 @@
         flex-flow: row wrap;
         justify-content: flex-start;
         .app {
-            flex: 0 0 33%;
+            flex: 0 0 auto;
             & > a {
                 padding: 10px;
                 text-decoration: none;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
 
-                & > img {
-                    width: 100px;
+                & > .thumbnail-img {
+                    width: auto;
                 }
             }
 
@@ -46,6 +44,7 @@
                 color: $offblack;
                 padding-top: 8px;
                 font-weight: 600;
+                width: 100px;
             }
         }
     }

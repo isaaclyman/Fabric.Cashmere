@@ -14,10 +14,14 @@ import {
     OnInit,
     Optional,
     Output,
-    QueryList
+    QueryList,
+    DoCheck,
+    Self,
+    ElementRef
 } from '@angular/core';
 import {parseBooleanAttribute} from '../util';
-import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
+import {HcFormControlComponent} from '../form-field/hc-form-control.component';
+import {ControlValueAccessor, NgForm, FormGroupDirective, NgControl} from '@angular/forms';
 
 let nextUniqueId = 0;
 
@@ -25,26 +29,31 @@ let nextUniqueId = 0;
 @Directive({
     // tslint:disable:directive-selector
     selector: 'hc-radio-group',
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => RadioGroupDirective),
-            multi: true
-        }
-    ],
+    providers: [{provide: HcFormControlComponent, useExisting: forwardRef(() => RadioGroupDirective), multi: true}],
     exportAs: 'hcRadioGroup'
 })
-export class RadioGroupDirective implements ControlValueAccessor, AfterContentInit {
+export class RadioGroupDirective extends HcFormControlComponent implements ControlValueAccessor, AfterContentInit, DoCheck {
+    @HostBinding('class.hc-radio-group-vertical')
+    _verticalClass: boolean = true;
+    @HostBinding('class.hc-radio-group-horizontal')
+    _horizontalClass: boolean = false;
+
     /** Event emitted when the value of a radio button changes inside the group. */
-    @Output() change: EventEmitter<RadioButtonChangeEvent> = new EventEmitter<RadioButtonChangeEvent>();
+    @Output()
+    change: EventEmitter<RadioButtonChangeEvent> = new EventEmitter<RadioButtonChangeEvent>();
+    /** A list of all the radio buttons included in the group */
     @ContentChildren(forwardRef(() => RadioButtonComponent), {descendants: true})
-    _radios: QueryList<RadioButtonComponent>;
+    radios: QueryList<RadioButtonComponent>;
     private _value: any = null;
-    private _name = `hc-radio-group-${nextUniqueId++}`;
-    private _disabled = false;
-    private _required = false;
+    private _uniqueName = `hc-radio-group-${nextUniqueId++}`;
+    private _name = this._uniqueName;
+    private _inline = false;
     private _initialized = false; // if value of radio group has been set to initial value
     private _selected: RadioButtonComponent | null = null; // the currently selected radio
+    private _form: NgForm | FormGroupDirective | null;
+
+    _componentId = this._name;
+
     _onChangeFn: (value: any) => void = () => {};
     _onTouchFn: () => any = () => {};
 
@@ -55,8 +64,18 @@ export class RadioGroupDirective implements ControlValueAccessor, AfterContentIn
     }
 
     set name(value: string) {
-        this._name = value;
+        this._name = value ? value : this._uniqueName;
         this._updateRadioButtonNames();
+    }
+
+    /** Unique id for the radio group. If none is supplied, defaults to name. */
+    @Input()
+    get id(): string {
+        return this._componentId || this._name;
+    }
+
+    set id(idVal: string) {
+        this._componentId = idVal ? idVal : this._name;
     }
 
     /** Value of radio buttons */
@@ -76,22 +95,25 @@ export class RadioGroupDirective implements ControlValueAccessor, AfterContentIn
     /** Boolean value that enables/disables the radio group */
     @Input()
     get disabled(): boolean {
-        return this._disabled;
+        if (this._ngControl && this._ngControl.disabled) {
+            return this._ngControl.disabled;
+        }
+        return this._isDisabled;
     }
 
     set disabled(value) {
-        this._disabled = parseBooleanAttribute(value);
+        this._isDisabled = parseBooleanAttribute(value);
         this._markRadiosForCheck();
     }
 
     /** Boolean value of whether the radio group is required on a form */
     @Input()
     get required(): boolean {
-        return this._required;
+        return this._isRequired;
     }
 
     set required(value) {
-        this._required = parseBooleanAttribute(value);
+        this._isRequired = parseBooleanAttribute(value);
         this._markRadiosForCheck();
     }
 
@@ -106,7 +128,33 @@ export class RadioGroupDirective implements ControlValueAccessor, AfterContentIn
         this._checkSelectedRadio();
     }
 
-    constructor(private _cdRef: ChangeDetectorRef) {}
+    /** Sets the layout orientation of the radio button group; defaults to false */
+    @Input()
+    get inline(): boolean {
+        return this._inline;
+    }
+
+    set inline(value) {
+        this._inline = parseBooleanAttribute(value);
+        this._verticalClass = !this._inline;
+        this._horizontalClass = this._inline;
+    }
+
+    constructor(
+        private _cdRef: ChangeDetectorRef,
+        @Optional() _parentForm: NgForm,
+        @Optional() _parentFormGroup: FormGroupDirective,
+        @Optional()
+        @Self()
+        public _ngControl: NgControl
+    ) {
+        super();
+
+        this._form = _parentForm || _parentFormGroup;
+        if (this._ngControl != null) {
+            this._ngControl.valueAccessor = this;
+        }
+    }
 
     ngAfterContentInit() {
         this._initialized = true;
@@ -138,16 +186,16 @@ export class RadioGroupDirective implements ControlValueAccessor, AfterContentIn
     }
 
     private _markRadiosForCheck() {
-        if (this._radios) {
-            this._radios.forEach(radio => radio._markForCheck());
+        if (this.radios) {
+            this.radios.forEach(radio => radio._markForCheck());
         }
     }
 
     private _updateSelectedRadio() {
         let isAlreadySelected = this._selected !== null && this._selected.value === this._value;
-        if (this._radios && !isAlreadySelected) {
+        if (this.radios && !isAlreadySelected) {
             this._selected = null;
-            this._radios.forEach(radio => {
+            this.radios.forEach(radio => {
                 radio.checked = this.value === radio.value;
                 if (radio.checked) {
                     this._selected = radio;
@@ -163,10 +211,32 @@ export class RadioGroupDirective implements ControlValueAccessor, AfterContentIn
     }
 
     private _updateRadioButtonNames(): void {
-        if (this._radios) {
-            this._radios.forEach(radio => {
+        if (this.radios) {
+            this.radios.forEach(radio => {
                 radio.name = this.name;
             });
+        }
+    }
+
+    ngDoCheck(): void {
+        // This needs to be checked every cycle because we can't subscribe to form submissions
+        if (this._ngControl) {
+            this._updateErrorState();
+        }
+    }
+
+    private _updateErrorState() {
+        const oldState = this._errorState;
+
+        // TODO: this could be abstracted out as an @Input() if we need this to be configurable
+        const newState = !!(
+            this._ngControl &&
+            this._ngControl.invalid &&
+            (this._ngControl.touched || (this._form && this._form.submitted))
+        );
+
+        if (oldState !== newState) {
+            this._errorState = newState;
         }
     }
 }
@@ -190,11 +260,14 @@ export class RadioButtonChangeEvent {
 export class RadioButtonComponent implements OnInit {
     private _uniqueId = `hc-radio-button-${nextUniqueId++}`;
     /** Element id for the radio button. Auto-generated id will be used if none is set */
-    @Input() id: string = this._uniqueId;
+    @Input()
+    id: string = this._uniqueId;
     /** Name of radio button */
-    @Input() name: string;
+    @Input()
+    name: string;
     /** Event emitted when the value of the radio button changes */
-    @Output() change = new EventEmitter<RadioButtonChangeEvent>();
+    @Output()
+    change = new EventEmitter<RadioButtonChangeEvent>();
     private _checked: boolean = false;
     private _value: any = null;
     private _required: boolean = false;
@@ -220,7 +293,7 @@ export class RadioButtonComponent implements OnInit {
 
     @HostBinding('attr.id')
     get _getHostId(): string {
-        return this._uniqueId;
+        return this.id;
     }
 
     /** Boolean value of whether the radio button is required */
@@ -263,13 +336,10 @@ export class RadioButtonComponent implements OnInit {
     }
 
     get _inputId() {
-        if (this.id) {
-            return this.id;
-        }
-        return `${this._uniqueId}-input`;
+        return `${this.id || this._uniqueId}-input`;
     }
 
-    constructor(@Optional() radioGroup: RadioGroupDirective, private cdRef: ChangeDetectorRef) {
+    constructor(@Optional() radioGroup: RadioGroupDirective, private cdRef: ChangeDetectorRef, public _elementRef: ElementRef) {
         this.radioGroup = radioGroup;
     }
 
@@ -287,14 +357,16 @@ export class RadioButtonComponent implements OnInit {
     _onInputChange(event: Event) {
         event.stopPropagation();
         const valueChanged = this.radioGroup && this.value !== this.radioGroup.value;
-        this.checked = true;
         this._emitChangeEvent();
         if (this.radioGroup !== null) {
             this.radioGroup._onChangeFn(this.value);
             this.radioGroup._touch();
             if (valueChanged) {
                 this.radioGroup._emitChangeEvent();
+                this.radioGroup.value = this.value;
             }
+        } else {
+            this.checked = true;
         }
     }
 

@@ -6,15 +6,17 @@ import {Subject} from 'rxjs';
 
 @Component({
     selector: 'hc-demo-components',
-    templateUrl: './components.component.html'
+    templateUrl: './components.component.html',
+    styleUrls: ['./components.component.scss']
 })
 export class ComponentsComponent implements OnDestroy {
     docItems: DocItem[];
     thisPage = '';
+    thisCategory = '';
     selectOptions: Array<string> = [];
     private unsubscribe = new Subject<void>();
 
-    constructor(docItemService: DocumentItemsService, private activatedRoute: ActivatedRoute, private router: Router) {
+    constructor(docItemService: DocumentItemsService, activatedRoute: ActivatedRoute, private router: Router) {
         this.docItems = docItemService.getDocItems();
 
         // Listen for vertical tab bar navigation and update the select component
@@ -22,6 +24,11 @@ export class ComponentsComponent implements OnDestroy {
             if (event instanceof NavigationEnd) {
                 if (activatedRoute.firstChild) {
                     this.thisPage = activatedRoute.firstChild.snapshot.params['id'];
+                    this.docItems.forEach(element => {
+                        if (this.thisPage === element.id) {
+                            this.thisCategory = element.category;
+                        }
+                    });
                 }
             }
         });
@@ -30,6 +37,13 @@ export class ComponentsComponent implements OnDestroy {
     // Handle changes to the select component and navigate
     selectUpdate(event: any) {
         this.router.navigate(['/components/' + event]);
+        window.scrollTo(0, 0);
+    }
+
+    // Handle nav changes via the sidebar
+    navUpdate(id: any) {
+        this.router.navigate(['/components/' + id]);
+        window.scrollTo(0, 0);
     }
 
     ngOnDestroy(): void {

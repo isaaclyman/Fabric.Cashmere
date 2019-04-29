@@ -1,6 +1,17 @@
-import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewEncapsulation} from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    ElementRef,
+    EventEmitter,
+    HostBinding,
+    Input,
+    Output,
+    ViewEncapsulation,
+    ViewChild
+} from '@angular/core';
 import {parseBooleanAttribute} from '../../util';
-import {validateStyleInput} from '../button.component';
+import {validateStyleInput, validateSizeInput, ButtonComponent} from '../button.component';
+import { HcPopComponent } from '../../pop/popover.component';
 
 /** SplitButton click event */
 export class SplitButtonClickEvent {
@@ -11,7 +22,7 @@ export class SplitButtonClickEvent {
 @Component({
     selector: 'hc-split-button',
     templateUrl: './split-button.component.html',
-    styleUrls: ['../button.component.scss'],
+    styleUrls: ['../button.component.scss', './split-button.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None
 })
@@ -19,21 +30,41 @@ export class SplitButtonComponent {
     private _tabIndex: number;
     private _disabled: boolean = false;
     private _style: string = 'primary';
+    private _size: string = 'md';
+
+    @ViewChild('splitBtnToggle')
+    _splitBtnToggle: ButtonComponent;
+
+    @ViewChild('splitMenu')
+    _splitMenu: HcPopComponent;
 
     /** Primary button's click event */
-    @Output() click = new EventEmitter<SplitButtonClickEvent>();
+    @Output()
+    click = new EventEmitter<SplitButtonClickEvent>();
 
     /** Additional information shown as tooltip */
-    @Input() title: string;
+    @Input()
+    title: string;
 
-    /** Type of button, possible values: 'submit', 'reset', 'button' */
-    @Input() type = 'button';
+    /** Positioning for the menu. Possible values: 'start', 'end', 'center' */
+    @Input()
+    menuPosition: string = 'end';
+
+    /** True if clicking anywhere in the menu should automatically close it. */
+    @Input()
+    autoCloseMenuOnClick = true;
+
+    /** Type of button. Possible values: 'submit', 'reset', 'button' */
+    @Input()
+    type = 'button';
 
     /** Used as a reference in JavaScript, or to reference form data after a form is submitted */
-    @Input() name: string;
+    @Input()
+    name: string;
 
     /** Value of primary button when submitted within a form */
-    @Input() value: string;
+    @Input()
+    value: string;
 
     /** Button tabindex */
     @Input()
@@ -69,6 +100,17 @@ export class SplitButtonComponent {
         this._style = btnStyle;
     }
 
+    /** Sets size of button. Choose from: `'sm' | 'md' | 'lg'` */
+    @Input()
+    get size(): string {
+        return this._size;
+    }
+
+    set size(size: string) {
+        validateSizeInput(size);
+        this._size = size;
+    }
+
     /** Whether the control is disabled. */
     @Input()
     get disabled(): boolean {
@@ -101,5 +143,15 @@ export class SplitButtonComponent {
         if (!this.disabled) {
             this.click.emit(new SplitButtonClickEvent(this));
         }
+    }
+
+    /** Manually close the menu */
+    closeMenu() {
+        this._splitMenu.close();
+    }
+
+    /** Manually open the menu */
+    openMenu() {
+        this._splitMenu.open();
     }
 }

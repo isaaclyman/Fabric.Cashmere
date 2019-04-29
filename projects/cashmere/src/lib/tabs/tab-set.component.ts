@@ -1,10 +1,30 @@
-import {AfterContentInit, Component, ContentChildren, Input, QueryList} from '@angular/core';
+import {AfterContentInit, Component, ContentChildren, Input, QueryList, Output, EventEmitter} from '@angular/core';
 import {TabComponent} from './tab.component';
 import {ActivatedRoute, Router} from '@angular/router';
+
+export class TabChangeEvent {
+    constructor(public index: number, public tab: TabComponent) {}
+}
 
 export function throwErrorForMissingRouterLink(tabsWithoutRouterLink: TabComponent[]) {
     const tabTitles = tabsWithoutRouterLink.map(tab => tab.tabTitle);
     throw Error(`Routerlink missing on ${tabTitles.join(',')}`);
+}
+
+const supportedDirections = ['horizontal', 'vertical'];
+
+export function validateDirectionInput(inputStr: string) {
+    if (supportedDirections.indexOf(inputStr) < 0) {
+        throw Error('Unsupported tab direction value: ' + inputStr);
+    }
+}
+
+export function tabComponentMissing(): Error {
+    return new Error(`TabSet must contain at least one TabComponent. Make sure to add a hc-tab to the hc-tab-set element.`);
+}
+
+export function invalidDefaultTab(tabVal: string) {
+    throw Error('Invalid default tab value: ' + tabVal + ". Must be 'none' or a value less than the total number of tabs in the set.");
 }
 
 @Component({
@@ -14,27 +34,93 @@ export function throwErrorForMissingRouterLink(tabsWithoutRouterLink: TabCompone
 })
 export class TabSetComponent implements AfterContentInit {
     _routerEnabled: boolean = false;
+    private _direction: string = 'vertical';
+    private _defaultTab: string = '0';
 
-    @ContentChildren(TabComponent) _tabs: QueryList<TabComponent>;
+    @ContentChildren(TabComponent)
+    _tabs: QueryList<TabComponent>;
 
-    /** Optional: Specify direction of the tabs. Defaults to vertical */
-    @Input() direction: 'horizontal' | 'vertical' = 'vertical';
+    /** Emits when the selected tab is changed */
+    @Output()
+    selectedTabChange: EventEmitter<TabChangeEvent> = new EventEmitter();
+
+    /** Specify direction of tabs as either `horizontal` or `vertical`. Defaults to `vertical` */
+    @Input()
+    get direction(): string {
+        return this._direction;
+    }
+
+    set direction(directionType: string) {
+        validateDirectionInput(directionType);
+        this._direction = directionType;
+    }
+
+    /** Zero-based numerical value specifying which tab to select by default, setting to `none` means no tab
+     * will be immediately selected. Defaults to 0 (the first tab). */
+    @Input()
+    get defaultTab(): string {
+        return this._defaultTab;
+    }
+
+    set defaultTab(tabValue: string) {
+        if (Number(tabValue) !== NaN || tabValue === 'none') {
+            this._defaultTab = tabValue;
+        } else {
+            invalidDefaultTab(tabValue);
+        }
+    }
 
     constructor(private router: Router, private route: ActivatedRoute) {}
 
     ngAfterContentInit(): void {
-        this.defaultToFirstTab();
+        if (this._tabs.length === 0) {
+            throw tabComponentMissing();
+        }
+
+        if (this.defaultTab !== 'none') {
+            this.defaultToFirstTab();
+        }
         this.checkForRouterUse();
 
         this._tabs.changes.subscribe(() => {
-            this.defaultToFirstTab();
+            if (this.defaultTab !== 'none') {
+                this.defaultToFirstTab();
+            }
             this.checkForRouterUse();
         });
     }
 
-    _setActive(tab: TabComponent) {
-        this._tabs.forEach(t => (t._active = false));
+    /** Sets the currently selected tab by either its numerical index or `TabComponent` object  */
+    selectTab(tab: number | TabComponent) {
+        if (typeof tab === 'number') {
+            let i: number = 0;
+
+            this._tabs.forEach(t => {
+                if (i === tab) {
+                    this._setActive(t);
+                }
+                i++;
+            });
+        } else {
+            this._setActive(tab);
+        }
+    }
+
+    _setActive(tab: TabComponent, event?: Event) {
+        let selectedTab: number = 0;
+        let index: number = 0;
+
+        this._tabs.forEach(t => {
+            if (t === tab) {
+                selectedTab = index;
+            }
+            t._active = false;
+            index++;
+        });
+
+        tab.tabClick.emit(event);
         tab._active = true;
+        this.selectedTabChange.emit(new TabChangeEvent(selectedTab, tab));
     }
 
     private defaultToFirstTab() {
@@ -45,7 +131,12 @@ export class TabSetComponent implements AfterContentInit {
             // the view in which they are projected
             // embedded views are checked *before* AfterContentInit
             // is triggered
-            setTimeout(() => this._setActive(this._tabs.first));
+            const tabArray = this._tabs.toArray();
+            if (tabArray[Number(this.defaultTab)]) {
+                setTimeout(() => this._setActive(tabArray[Number(this.defaultTab)]));
+            } else {
+                invalidDefaultTab(this.defaultTab);
+            }
         }
     }
 
@@ -61,7 +152,9 @@ export class TabSetComponent implements AfterContentInit {
 
         if (countUsingRouter === this._tabs.length) {
             this._routerEnabled = true;
-            this.defaultToFirstRoute();
+            if (this._defaultTab !== 'none') {
+                this.defaultToFirstRoute();
+            }
         }
     }
 
@@ -78,8 +171,11 @@ export class TabSetComponent implements AfterContentInit {
             return;
         }
 
-        const firstRoute = this.mapRouterLinkToString(this._tabs.first.routerLink);
-        this.router.navigate([firstRoute], {relativeTo: this.route});
+        const tabArray = this._tabs.toArray();
+        if (tabArray[Number(this.defaultTab)]) {
+            const firstRoute = this.mapRouterLinkToString(tabArray[Number(this.defaultTab)].routerLink);
+            this.router.navigate([firstRoute], {relativeTo: this.route});
+        }
     }
 
     private mapRouterLinkToString(routerLink: string | any[]): string {

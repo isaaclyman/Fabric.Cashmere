@@ -1,31 +1,38 @@
-import {Observable, of} from 'rxjs';
+import {Observable} from 'rxjs';
 
-import {delay} from 'rxjs/operators';
 import {HttpClient} from '@angular/common/http';
 import {Inject, Injectable} from '@angular/core';
-import {getMockApplication} from './app-switcher-mock';
-import {IAppSwitcherConfig, IAppSwitcherService, IDiscoveryRequest} from './app-switcher-interfaces';
+import {IAppSwitcherConfig, IAppSwitcherService, IDiscoveryRequest, APP_SWITCHER_CONFIG} from './app-switcher-interfaces';
 
-export class MockAppSwitcherService implements IAppSwitcherService {
-    public readonly allApplicationsUri: string = '#';
-
-    constructor() {}
-
-    public getApplications(): Observable<IDiscoveryRequest> {
-        return of({value: getMockApplication(5)}).pipe(delay(500));
-    }
-}
-
+/**
+ * An app switcher service designed to work with the Health Catalyst DOS platform's DiscoveryService
+ */
 @Injectable()
 export class AppSwitcherService implements IAppSwitcherService {
-    public readonly allApplicationsUri: string;
+    readonly allApplicationsUri: string;
+    private readonly discoveryServiceUri: string;
 
-    constructor(private http: HttpClient, @Inject('IAppSwitcherConfig') private config: IAppSwitcherConfig) {
-        this.allApplicationsUri = `${this.config.discoveryServiceUri}/apps`;
+    constructor(private http: HttpClient, @Inject(APP_SWITCHER_CONFIG) private config: IAppSwitcherConfig) {
+        if (!config || !config.discoveryServiceUri) {
+            throw new Error(
+                [
+                    'Failed to initialize AppSwitcherService: invalid APP_SWITCHER_CONFIG.',
+                    'You must provide a config object with a `discoveryServiceUri`.',
+                    `(value provided: ${config ? config.discoveryServiceUri : config})`
+                ].join(' ')
+            );
+        }
+
+        this.discoveryServiceUri = this.normalizeUri(this.config.discoveryServiceUri);
+        this.allApplicationsUri = `${this.discoveryServiceUri}/apps`;
     }
 
-    public getApplications(): Observable<IDiscoveryRequest> {
-        const url = `${this.config.discoveryServiceUri}/v1/Services/?$filter=DiscoveryType eq 'Application' and IsHidden eq false&$top=12`;
-        return this.http.get<IDiscoveryRequest>(url) as any;
+    getApplications(): Observable<IDiscoveryRequest> {
+        const url = `${this.discoveryServiceUri}/v1/Services?$filter=DiscoveryType eq 'Application' and IsHidden eq false&$top=12`;
+        return this.http.get<IDiscoveryRequest>(url, {withCredentials: true});
+    }
+
+    private normalizeUri(uri: string): string {
+        return uri.replace(/\/(v\d+\/?)?$/, '');
     }
 }
